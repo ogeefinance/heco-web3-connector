@@ -1,4 +1,4 @@
-interface HoubiEcoChain {
+interface Heco {
   send: unknown;
   enable: () => Promise<string[]>;
   on?: (method: string, listener: (...args: any[]) => void) => void;
@@ -6,7 +6,7 @@ interface HoubiEcoChain {
 }
 
 declare interface Window {
-  HoubiEcoChain?: HoubiEcoChain;
+  Heco?: Heco;
 }
 
 declare const __DEV__: boolean;

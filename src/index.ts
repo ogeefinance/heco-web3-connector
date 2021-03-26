@@ -38,7 +38,7 @@ export class HecoConnector extends AbstractConnector {
     if (__DEV__) {
       console.log("Handling 'chainChanged' event with payload", chainId);
     }
-    this.emitUpdate({ chainId, provider: window.HoubiEcoChain });
+    this.emitUpdate({ chainId, provider: window.Heco });
   }
 
   private handleAccountsChanged(accounts: string[]): void {
@@ -63,29 +63,29 @@ export class HecoConnector extends AbstractConnector {
     if (__DEV__) {
       console.log("Handling 'networkChanged' event with payload", networkId);
     }
-    this.emitUpdate({ chainId: networkId, provider: window.HoubiEcoChain });
+    this.emitUpdate({ chainId: networkId, provider: window.Heco });
   }
 
   public async activate(): Promise<ConnectorUpdate> {
-    if (!window.HoubiEcoChain) {
+    if (!window.Heco) {
       throw new NoHecoProviderError();
     }
 
-    if (window.HoubiEcoChain.on) {
-      window.HoubiEcoChain.on("chainChanged", this.handleChainChanged);
-      window.HoubiEcoChain.on("accountsChanged", this.handleAccountsChanged);
-      window.HoubiEcoChain.on("close", this.handleClose);
-      window.HoubiEcoChain.on("networkChanged", this.handleNetworkChanged);
+    if (window.Heco.on) {
+      window.Heco.on("chainChanged", this.handleChainChanged);
+      window.Heco.on("accountsChanged", this.handleAccountsChanged);
+      window.Heco.on("close", this.handleClose);
+      window.Heco.on("networkChanged", this.handleNetworkChanged);
     }
 
-    if ((window.HoubiEcoChain as any).isMetaMask) {
-      (window.HoubiEcoChain as any).autoRefreshOnNetworkChange = false;
+    if ((window.Heco as any).isMetaMask) {
+      (window.Heco as any).autoRefreshOnNetworkChange = false;
     }
 
     // try to activate + get account via eth_requestAccounts
     let account;
     try {
-      account = await (window.HoubiEcoChain.send as Send)(
+      account = await (window.Heco.send as Send)(
         "eth_requestAccounts"
       ).then((sendReturn) => parseSendReturn(sendReturn)[0]);
     } catch (error) {
@@ -100,27 +100,26 @@ export class HecoConnector extends AbstractConnector {
 
     // if unsuccessful, try enable
     if (!account) {
-      // if enable is successful but doesn't return accounts, fall back to getAccount (not happy i have to do this...)
-      account = await window.HoubiEcoChain.enable().then(
+      account = await window.Heco.enable().then(
         (sendReturn) => sendReturn && parseSendReturn(sendReturn)[0]
       );
     }
 
-    return { provider: window.HoubiEcoChain, ...(account ? { account } : {}) };
+    return { provider: window.Heco, ...(account ? { account } : {}) };
   }
 
   public async getProvider(): Promise<any> {
-    return window.HoubiEcoChain;
+    return window.Heco;
   }
 
   public async getChainId(): Promise<number | string> {
-    if (!window.HoubiEcoChain) {
+    if (!window.Heco) {
       throw new NoHecoProviderError();
     }
 
     let chainId;
     try {
-      chainId = await (window.HoubiEcoChain.send as Send)("eth_chainId").then(
+      chainId = await (window.Heco.send as Send)("eth_chainId").then(
         parseSendReturn
       );
     } catch {
@@ -132,7 +131,7 @@ export class HecoConnector extends AbstractConnector {
 
     if (!chainId) {
       try {
-        chainId = await (window.HoubiEcoChain.send as Send)("net_version").then(
+        chainId = await (window.Heco.send as Send)("net_version").then(
           parseSendReturn
         );
       } catch {
@@ -146,7 +145,7 @@ export class HecoConnector extends AbstractConnector {
     if (!chainId) {
       try {
         chainId = parseSendReturn(
-          (window.HoubiEcoChain.send as SendOld)({ method: "net_version" })
+          (window.Heco.send as SendOld)({ method: "net_version" })
         );
       } catch {
         warning(
@@ -157,16 +156,16 @@ export class HecoConnector extends AbstractConnector {
     }
 
     if (!chainId) {
-      if ((window.HoubiEcoChain as any).isDapper) {
+      if ((window.Heco as any).isDapper) {
         chainId = parseSendReturn(
-          (window.HoubiEcoChain as any).cachedResults.net_version
+          (window.Heco as any).cachedResults.net_version
         );
       } else {
         chainId =
-          (window.HoubiEcoChain as any).chainId ||
-          (window.HoubiEcoChain as any).netVersion ||
-          (window.HoubiEcoChain as any).networkVersion ||
-          (window.HoubiEcoChain as any)._chainId;
+          (window.Heco as any).chainId ||
+          (window.Heco as any).netVersion ||
+          (window.Heco as any).networkVersion ||
+          (window.Heco as any)._chainId;
       }
     }
 
@@ -174,13 +173,13 @@ export class HecoConnector extends AbstractConnector {
   }
 
   public async getAccount(): Promise<null | string> {
-    if (!window.HoubiEcoChain) {
+    if (!window.Heco) {
       throw new NoHecoProviderError();
     }
 
     let account;
     try {
-      account = await (window.HoubiEcoChain.send as Send)("eth_accounts").then(
+      account = await (window.Heco.send as Send)("eth_accounts").then(
         (sendReturn) => parseSendReturn(sendReturn)[0]
       );
     } catch {
@@ -189,7 +188,7 @@ export class HecoConnector extends AbstractConnector {
 
     if (!account) {
       try {
-        account = await window.HoubiEcoChain.enable().then(
+        account = await window.Heco.enable().then(
           (sendReturn) => parseSendReturn(sendReturn)[0]
         );
       } catch {
@@ -202,7 +201,7 @@ export class HecoConnector extends AbstractConnector {
 
     if (!account) {
       account = parseSendReturn(
-        (window.HoubiEcoChain.send as SendOld)({ method: "eth_accounts" })
+        (window.Heco.send as SendOld)({ method: "eth_accounts" })
       )[0];
     }
 
@@ -210,17 +209,17 @@ export class HecoConnector extends AbstractConnector {
   }
 
   public deactivate() {
-    if (window.HoubiEcoChain && window.HoubiEcoChain.removeListener) {
-      window.HoubiEcoChain.removeListener(
+    if (window.Heco && window.Heco.removeListener) {
+      window.Heco.removeListener(
         "chainChanged",
         this.handleChainChanged
       );
-      window.HoubiEcoChain.removeListener(
+      window.Heco.removeListener(
         "accountsChanged",
         this.handleAccountsChanged
       );
-      window.HoubiEcoChain.removeListener("close", this.handleClose);
-      window.HoubiEcoChain.removeListener(
+      window.Heco.removeListener("close", this.handleClose);
+      window.Heco.removeListener(
         "networkChanged",
         this.handleNetworkChanged
       );
@@ -228,12 +227,12 @@ export class HecoConnector extends AbstractConnector {
   }
 
   public async isAuthorized(): Promise<boolean> {
-    if (!window.HoubiEcoChain) {
+    if (!window.Heco) {
       return false;
     }
 
     try {
-      return await (window.HoubiEcoChain.send as Send)("eth_accounts").then(
+      return await (window.Heco.send as Send)("eth_accounts").then(
         (sendReturn) => {
           if (parseSendReturn(sendReturn).length > 0) {
             return true;
